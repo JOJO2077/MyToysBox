@@ -1,0 +1,54 @@
+<body style="background-color:1b3c59">
+    <canvas id="cc" width="96px" height="96px"></canvas>
+</body>
+<script>
+    var w = 96,
+        h = 96;
+    var cc = document.getElementById('cc');
+    cc = cc.getContext('2d');
+    cc.fillStyle = 'rgba(0,0,0,0)';
+    cc.fillRect(0, 0, w, h);
+
+    var progress = 0;
+    var angel = 1;
+
+    requestAnimationFrame(draw);
+
+    function draw() {
+        cc.clearRect(0, 0, w, h);
+        var rad = 40;
+        var points = [];
+        var setp = 2 * Math.PI / 5;
+        for (var i = 0; i < 5; i++) {
+            points.push([rad * Math.sin(angel + i * setp), rad * Math.cos(angel + i * setp)])
+        }
+
+        cc.beginPath();
+        cc.lineWidth = 5;
+        cc.lineCap = 'round';
+        cc.lineJoin = 'round';
+        cc.strokeStyle = '#00aaff';
+        cc.moveTo(w / 2 + points[0][0], h / 2 - points[0][1]);
+        var point;
+        var map = [0, 2, 4, 1, 3, 0];
+        for (var i = 0; i < 5; i++) {
+            if (progress > i) {
+                point = lerp(points[map[i]], points[map[i + 1]], Math.min(progress - i, 1));
+                cc.lineTo(w / 2 + point[0], h / 2 - point[1]);
+            }
+        }
+        if (progress > 5) {
+            cc.arc(w / 2 + 0, h / 2 + 0, rad, angel - Math.PI / 2, angel + Math.PI * (-0.5 + Math.min(progress - 5, 2)),
+                false);
+        }
+        cc.stroke();
+        progress += 0.1;
+        angel += Math.min(0.001*progress,0.01);
+        progress = progress % 16;
+        requestAnimationFrame(draw);
+    }
+
+    function lerp(a, b, per) {
+        return [((1 - per) * a[0] + per * b[0]), ((1 - per) * a[1] + per * b[1])]
+    }
+</script>
