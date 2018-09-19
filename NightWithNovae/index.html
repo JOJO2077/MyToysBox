@@ -44,15 +44,6 @@
             points.push([rad * Math.sin(angle + i * setp), rad * Math.cos(angle + i * setp)])
         }
 
-        if (progress > 5) {
-            if (Math.random() > 0.98) {
-                addStar();
-            }
-            for (i in twinkling) {
-                twinkling[i].draw(delta, temp, cc);
-            }
-        }
-
         cc.save();
         cc.beginPath();
 
@@ -64,6 +55,7 @@
         cc.lineWidth = 5;
         cc.lineCap = 'round';
         cc.lineJoin = 'round';
+        cc.globalCompositeOperation = 'light';
         cc.strokeStyle = `rgba(170, 204, 255, ${progress/8})`;
         cc.moveTo(w + points[0][0], h - points[0][1]);
         var point;
@@ -84,11 +76,26 @@
         cc.stroke();
         cc.restore();
 
+        if (progress > 5) {
+            if (Math.random() > 0.98) {
+                addStar(RAIN);
+            }
+            for (i in twinkling) {
+                twinkling[i].draw(delta, temp, cc);
+            }
+        }
+        if (point !== undefined && progress < 5) {
+            addStar(EXPO, w + point[0], h - point[1], Math.atan2(-point[1],point[0]));
+        }
+        for (i in exploding) {
+            exploding[i].draw(delta, temp, cc, progress > 5);
+        }
+
 
         // animate
-        progress += 0.05;
+        progress += 0.08;
         progress = progress % 99999999;
-        angle += Math.min(0.001 * progress, 0.01);
+        angle += (progress > 5 ? 0.005 : 0);
         requestAnimationFrame(draw);
     }
 
@@ -108,8 +115,11 @@
         mAngle = Math.PI / 4,
         angleRange = Math.PI / 2,
         dirRange = Math.PI / 18,
-        ridRange = Math.PI / 1500;
+        ridRange = Math.PI / 1500,
+        lineWave = 3;
 
+    var EXPO = 'EXPO';
+    var RAIN = 'RAIN';
     class starObj {
         constructor() {
             this.color = '';
@@ -125,11 +135,29 @@
             this.speed = 0;
             this.rotate = 0;
             this.rid = 0;
+            this.flag = RAIN;
 
         }
-        reset() {
+        reset(posx, posy, angle) {
+            if (posx) {
+                this.reset2(posx, posy, angle);
+            } else {
+                this.reset1();
+            }
+        }
+
+        draw(time, tempCv, mainCv, moving) {
+            if (moving === undefined) {
+                this.draw1(time, tempCv, mainCv);
+            } else {
+                this.draw2(time, tempCv, mainCv, moving);
+            }
+        }
+
+        reset1() {
             var r1 = Math.random();
             this.size = mSize + r1 * sizeRange;
+            this.size *=0.7;
             this.color = Math.floor(Math.random() * colors.length);
             this.alpha = mAlpha + r1 * alphaRange;
             this.start = start + r1 * startRange;
@@ -138,13 +166,15 @@
             this.life = mLife + Math.random() * lifeRange;
             this.age = 0;
             this.blink = mBlink + Math.random() * blinkRange;
-            this.life += this.blink-this.life % this.blink;
+            this.life += this.blink - this.life % this.blink;
             this.angle = mAngle + Math.random() * angleRange;
             this.dirAngle = (1 - Math.random() * 2) * dirRange * Math.abs(1 - Math.PI / 2 / this.angle);
             this.rotate = Math.random() * 2 * Math.PI;
             this.rid = (1 - Math.random() * 2) * ridRange;
+            this.flag = RAIN;
         }
-        draw(time, tempCv, mainCv) {
+
+        draw1(time, tempCv, mainCv) {
             this.pos += this.speed * time;
             this.age += time;
             this.rotate += this.rid * time;
@@ -152,7 +182,7 @@
                 return;
             };
 
-            var a = (1-Math.abs(0.5-(this.age % this.blink) / this.blink)) * 2 * this.alpha;
+            var a = Math.sqrt(0.5 - Math.abs((this.age % this.blink) / this.blink - 0.5)) * 2 * this.alpha;
             tempCv.clearRect(0, 0, tempLength, tempLength);
             tempCv.save();
             tempCv.fillStyle = getColor(this.color, a);
@@ -168,24 +198,77 @@
             mainCv.rotate(Math.PI / 2 - this.angle);
             mainCv.translate(this.pos, 0);
             mainCv.rotate(this.rotate);
-            mainCv.translate(-this.size/2,-this.size/2)
+            mainCv.translate(-this.size / 2, -this.size / 2)
             mainCv.drawImage(ctemp, 0, 0);
             mainCv.restore();
         }
+
+        reset2(posx, posy, angle) {
+            this.pos = 0;
+            this.start = [posx + (Math.random() - 0.5) * lineWave, posy + (Math.random() - 0.5) * lineWave];
+            this.dirAngle = angle - Math.PI / 2 + (Math.random() - 0.5) * dirRange
+            this.speed = mSpeed + Math.random() * speedRange;
+            this.speed *= 3;
+            this.size = mSize + Math.random() * sizeRange;
+            this.color = Math.floor(Math.random() * colors.length);
+            this.alpha = mAlpha + Math.random() * alphaRange;
+            this.age = 0;
+            this.blink = mBlink + Math.random() * blinkRange;
+            this.life = 2.5 * this.blink;
+            this.rotate = Math.random() * 2 * Math.PI;
+            this.rid = (1 - Math.random() * 2) * ridRange;
+            this.flag = EXPO;
+        }
+        draw2(time, tempCv, mainCv, moving) {
+            if (moving) {
+                this.pos += this.speed * time;
+                this.age += time;
+                this.rotate += this.rid * time;
+                if (this.age > this.life) {
+                    return;
+                };
+            }
+
+            var a = Math.sqrt(Math.abs((this.age % this.blink) / this.blink - 0.5)) * 2 * this.alpha;
+            tempCv.clearRect(0, 0, tempLength, tempLength);
+            tempCv.save();
+            tempCv.fillStyle = getColor(this.color, a);
+            tempCv.fillRect(0, 0, tempLength, tempLength);
+            tempCv.globalCompositeOperation = 'destination-in';
+            tempCv.drawImage(starImg, 0, 0, this.size, this.size);
+            tempCv.restore();
+
+            mainCv.save();
+            mainCv.translate(this.start[0], this.start[1]);
+            mainCv.rotate(this.dirAngle);
+            mainCv.translate(this.pos, 0);
+            mainCv.rotate(this.rotate);
+            mainCv.translate(-this.size / 2, -this.size / 2)
+            mainCv.drawImage(ctemp, 0, 0);
+            mainCv.restore();
+        }
+
     }
 
     //star factory
+    var exploding = [];
     var twinkling = [];
 
-    function addStar() {
+    function addStar(flag, x, y, angle) {
         var star;
-        if (twinkling.length < 20) {
-            star = new starObj();
+        if (flag === RAIN) {
+            if (twinkling.length < 20) {
+                star = new starObj();
+            } else {
+                star = twinkling.shift();
+            }
+            star.reset();
+            twinkling.push(star);
         } else {
-            star = twinkling.shift();
+            star = new starObj();
+            star.reset(x, y, angle);
+            exploding.push(star);
         }
-        star.reset();
-        twinkling.push(star);
     }
 
 
