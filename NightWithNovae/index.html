@@ -1,23 +1,23 @@
 <body style="background-color:1b3c59">
-    <canvas id="cc" width="120px" height="180px"></canvas>
-    <canvas id="temp" width="15px" height="15px" style="display:none"></canvas>
+    <canvas id="cc" width="140px" height="180px"></canvas>
     <img id="star" src="star.svg" width="10px" style=" display:none">
 </body>
 <script>
-    var cc = document.getElementById('cc');
-    var ctemp = document.getElementById('temp');
+    var cavcc = document.getElementById('cc');
     var starImg = document.getElementById('star');
+    var ctemp = document.createElement('canvas')
+    ctemp.style = 'width:15px,height:15px,display:none,'
     var temp = ctemp.getContext('2d');
-    cc = cc.getContext('2d');
+    cc = cavcc.getContext('2d');
 
     // position zero
-    var w = 60;
-    var h = 60;
+    var w, h;
+    w = h = cavcc.width / 2
     var tempLength = 15;
-
+    // settings
     var progress = 0;
     var angle = 1;
-    var rad = 50;
+    var rad = 0.7 * w;
     var colors = [
         [0, 102, 255],
         [255, 203, 195],
@@ -29,6 +29,7 @@
         [159, 246, 253],
         [170, 248, 254]
     ];
+
     var time = Date.now();
     requestAnimationFrame(draw);
 
@@ -37,7 +38,7 @@
         var delta = now - time;
         time = now;
 
-        cc.clearRect(0, 0, 120, 180);
+        cc.clearRect(0, 0, cavcc.width, cavcc.height);
         var points = [];
         var setp = 2 * Math.PI / 5;
         for (var i = 0; i < 5; i++) {
@@ -85,10 +86,10 @@
             }
         }
         if (point !== undefined && progress < 5) {
-            addStar(EXPO, w + point[0], h - point[1], Math.atan2(-point[1],point[0]));
+            addStar(EXPO, w + point[0], h - point[1], Math.atan2(-point[1], point[0]));
         }
         for (i in exploding) {
-            exploding[i].draw(delta, temp, cc, progress > 5);
+            exploding[i].draw(delta, temp, cc, progress > 5.5);
         }
 
 
@@ -99,7 +100,7 @@
         requestAnimationFrame(draw);
     }
 
-    // star particle
+    // star particle settings value = min + random * range
     var mSize = 5,
         sizeRange = 10,
         mAlpha = .3,
@@ -157,7 +158,7 @@
         reset1() {
             var r1 = Math.random();
             this.size = mSize + r1 * sizeRange;
-            this.size *=0.7;
+            this.size *= 0.7;
             this.color = Math.floor(Math.random() * colors.length);
             this.alpha = mAlpha + r1 * alphaRange;
             this.start = start + r1 * startRange;
@@ -222,12 +223,12 @@
         draw2(time, tempCv, mainCv, moving) {
             if (moving) {
                 this.pos += this.speed * time;
-                this.age += time;
                 this.rotate += this.rid * time;
                 if (this.age > this.life) {
                     return;
                 };
             }
+            this.age += time;
 
             var a = Math.sqrt(Math.abs((this.age % this.blink) / this.blink - 0.5)) * 2 * this.alpha;
             tempCv.clearRect(0, 0, tempLength, tempLength);
