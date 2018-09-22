@@ -11,7 +11,7 @@ if(p == m):
     exit(0)
 
 ip = p
-token = '51474,20c11de6a42ccb66eae04b342be490ba'
+token = '$id,$token'
 
 data = {
     'login_token': token,
@@ -19,9 +19,9 @@ data = {
     'lang': 'cn',
     'error_on_empty': 'no',
     'domain': 'cocolate.cc',
-    'record_id': '352248788',
-    'sub_domain': 'sss',
-    'record_type': 'A',
+    'record_id': '$id',
+    'sub_domain': '$sub',
+    'record_type': '$type',
     'record_line': '默认',
     'value': ip,
 }
