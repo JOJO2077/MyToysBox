@@ -81,8 +81,8 @@
             if (Math.random() > 0.98) {
                 addStar(RAIN);
             }
-            for (i in twinkling) {
-                twinkling[i].draw(delta, temp, cc);
+            for (i in twinklying) {
+                twinklying[i].draw(delta, temp, cc);
             }
         }
         if (point !== undefined && progress < 5) {
@@ -253,18 +253,18 @@
 
     //star factory
     var exploding = [];
-    var twinkling = [];
+    var twinklying = [];
 
     function addStar(flag, x, y, angle) {
         var star;
         if (flag === RAIN) {
-            if (twinkling.length < 20) {
+            if (twinklying.length < 20) {
                 star = new starObj();
             } else {
-                star = twinkling.shift();
+                star = twinklying.shift();
             }
             star.reset();
-            twinkling.push(star);
+            twinklying.push(star);
         } else {
             star = new starObj();
             star.reset(x, y, angle);
